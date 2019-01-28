@@ -1,25 +1,24 @@
 import numpy as np
 import mnist
-
+from matplotlib import pyplot as plt
 x_train, y_train, x_test, y_test = mnist.load()
 
-
 class SimpleNeuralNetwork:
-    num_inputs = 0
-    weights = np.array([])
-    learning_rate = 0
 
-    def __init__(self, num_inputs):
-        self.num_inputs = num_inputs
-        self.weights = np.zeros((1, num_inputs))
+    def __init__(self, size):
+        self.weights = np.random.rand(1, size)
+        self.bias = np.random.rand(1)
+        self.alpha = 0.01
 
     def compute(self, x):
-        input_vectorized = np.array(x)
-        linear_combination = np.dot(input_vectorized, self.weights)
-        return 1/(1+np.exp(-linear_combination))
+        return self.sigmoid(np.dot(x, self.weights)+self.bias)
 
-    def learn(self, x, t):
+    def log_reg(self, training_inputs, training_outputs):
+        self.weights -= self.alpha*np.matmul(training_inputs, training_outputs - np.matmul(self.weights, training_inputs))
+
+    def sigmoid(self, x):
+        return 1.0/(1.0+np.exp(-x))
 
 
-
-derp = SimpleNeuralNetwork(785)
+derp = SimpleNeuralNetwork(784)
+derp.log_reg(x_train[0:10], y_train[0:10])
