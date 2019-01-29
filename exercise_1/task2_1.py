@@ -7,7 +7,7 @@ class SimpleNeuralNetwork:
 
     def __init__(self, size):
         self.weights = 0.001*np.random.randn(size, )
-        self.bias = np.random.rand(1,1)
+        self.bias = np.random.rand(1,)
         self.alpha = 0.01
 
     def compute(self, input_set):
