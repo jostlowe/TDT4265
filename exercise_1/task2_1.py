@@ -6,19 +6,23 @@ x_train, y_train, x_test, y_test = mnist.load()
 class SimpleNeuralNetwork:
 
     def __init__(self, size):
-        self.weights = np.random.rand(1, size)
-        self.bias = np.random.rand(1)
+        self.weights = 0.001*np.random.randn(size, )
+        self.bias = np.random.rand(1,1)
         self.alpha = 0.01
 
-    def compute(self, x):
-        return self.sigmoid(np.dot(x, self.weights)+self.bias)
+    def compute(self, input_set):
+        return np.ndarray.flatten(self.sigmoid(-np.matmul(input_set, self.weights)))
 
-    def log_reg(self, training_inputs, training_outputs):
-        self.weights -= self.alpha*np.matmul(training_inputs, training_outputs - np.matmul(self.weights, training_inputs))
+    def log_reg(self, training_input, desired_output):
+        error = desired_output - self.compute(training_input)
+        self.weights -= self.alpha*np.matmul(error, training_input)
+
 
     def sigmoid(self, x):
-        return 1.0/(1.0+np.exp(-x))
+        return 1.0/(1.0+np.exp(x))
 
 
 derp = SimpleNeuralNetwork(784)
-derp.log_reg(x_train[0:10], y_train[0:10])
+x_mini = x_train[:10]
+y_mini = y_train[:10]
+print(derp.log_reg(x_mini, y_mini))
