@@ -19,8 +19,8 @@ y_test = np.array([{2: 1, 3: 0}[y] for x, y in zip(x_test_raw, y_test_raw) if y 
 class Henk:
 
     def __init__(self, num_inputs):
-        self.weights = 0.001*np.random.randn(num_inputs+1,)
-        self.learning_rate = 0.001
+        self.weights = 0.0000001*np.random.randn(num_inputs+1,)
+        self.learning_rate = 0.0000001
 
     def calc_z(self, data_sets):
         return np.matmul(data_sets, self.weights)
@@ -38,11 +38,18 @@ class Henk:
         self.weights += self.learning_rate * np.matmul(error,data_sets)
         return error
 
+    def loss(self, data_sets, desired_sets):
+        z = self.calc_z(data_sets)
+        y = self.sigmoid(z)
+        t = desired_sets
+        print("Y tho??", y)
+        instantanious_loss = np.matmul(t, np.log(y)) + np.matmul((1.0-t), np.log(1.0-y))
+        return -np.average(instantanious_loss)
 
 
-
-def simple_plot(image):
+def simple_wieght_plot(image):
     plt.imshow(image.reshape((28, 28)))
+    plt.title('Weights')
     plt.colorbar()
     plt.show()
 
@@ -54,9 +61,16 @@ def get_random_images(x, y, batch_size):
     return np.array([x[i] for i in randints]), np.array([y[i] for i in randints])
 
 henk = Henk(784)
-for n in range(200):
-    henk.learning_rate = 0.001/(1+(n/10))
-    random_x, random_y = get_random_images(x_train, y_train, 100)
-    henk.gradient_descent(random_x, random_y)
-    print(np.average(abs(henk.feed_forward(x_test)-y_test)))
-simple_plot(henk.weights[:784])
+losses = []
+for n in range(40):
+    random_x, random_y = get_random_images(x_train, y_train, 20)
+    error = henk.gradient_descent(random_x, random_y)
+    ff = henk.feed_forward(x_test)-y_test
+    sub_loss = henk.loss(x_test, y_test)
+    losses.append(sub_loss)
+simple_wieght_plot(henk.weights[:784])
+plt.plot(losses)
+plt.title('Loss')
+plt.xlabel('Iterations')
+plt.ylabel('Loss')
+plt.show()
