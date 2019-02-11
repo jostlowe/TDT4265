@@ -197,11 +197,11 @@ X_train, Y_train, X_val, Y_val = train_val_split(X_train, Y_train, 0.1)
 
 # Hyperparameters
 batch_size = 128
-learning_rate = 0.5
+learning_rate = 1
 num_batches = X_train.shape[0] // batch_size
 should_gradient_check = False
 check_step = num_batches // 10
-max_epochs = 20
+max_epochs = 40
 layer_sizes = [785, 64, 10]
 
 # Tracking variables
@@ -216,7 +216,6 @@ VAL_ACC = []
 def train_loop():
     w1 = np.random.uniform(-1, 1, (64, X_train.shape[1]))
     w2 = np.random.uniform(-1, 1, (Y_train.shape[1], 64))
-    '''
     for e in range(max_epochs):  # Epochs
         for i in tqdm.trange(num_batches):
             X_batch = X_train[i*batch_size:(i+1)*batch_size]
@@ -240,7 +239,6 @@ def train_loop():
                     print(VAL_LOSS[-4:])
                     print("early stopping.")
                     return w1, w2
-        '''
     return w1, w2
 
 
