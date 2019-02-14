@@ -3,6 +3,35 @@ import matplotlib.pyplot as plt
 import mnist
 import tqdm
 
+def shuffle_training_sets(X, Y):
+    dataset_size = X.shape[0]
+    id = np.arange(0, dataset_size)
+    np.random.shuffle(id)
+
+    return X[id], Y[id]
+
+def onehot_encode(Y, n_classes=10):
+    onehot = np.zeros((Y.shape[0], n_classes))
+    onehot[np.arange(0, Y.shape[0]), Y] = 1
+    return onehot
+
+
+def bias_trick(X):
+    return np.concatenate((X, np.ones((len(X), 1))), axis=1)
+
+
+def train_val_split(X, Y, val_percentage):
+    dataset_size = X.shape[0]
+    idx = np.arange(0, dataset_size)
+    np.random.shuffle(idx)
+
+    train_size = int(dataset_size*(1-val_percentage))
+    idx_train = idx[:train_size]
+    idx_val = idx[train_size:]
+    X_train, Y_train = X[idx_train], Y[idx_train]
+    X_val, Y_val = X[idx_val], Y[idx_val]
+    return X_train, Y_train, X_val, Y_val
+
 
 def should_early_stop(validation_loss, num_steps=3):
     """
@@ -16,118 +45,74 @@ def should_early_stop(validation_loss, num_steps=3):
         return False
 
     is_increasing = [validation_loss[i] <= validation_loss[i+1] for i in range(-num_steps-1, -1)]
-    return sum(is_increasing) == len(is_increasing) 
+    return sum(is_increasing) == len(is_increasing)
 
 
-def train_val_split(X, Y, val_percentage):
-    """
-    Selects samples from the dataset randomly to be in the validation set.
-    Also, shuffles the train set.
-    --
-    X: [N, num_features] numpy vector,
-    Y: [N, 1] numpy vector
-    val_percentage: amount of data to put in validation set
-    """
-    dataset_size = X.shape[0]
-    idx = np.arange(0, dataset_size)
-    np.random.shuffle(idx)
-
-    train_size = int(dataset_size*(1-val_percentage))
-    idx_train = idx[:train_size]
-    idx_val = idx[train_size:]
-    X_train, Y_train = X[idx_train], Y[idx_train]
-    X_val, Y_val = X[idx_val], Y[idx_val]
-    return X_train, Y_train, X_val, Y_val
-
-def shuffle_training_sets(X, Y):
-    dataset_size = X.shape[0]
-    id = np.arange(0, dataset_size)
-    np.random.shuffle(id)
-
-    return X[id], Y[id]
-
-
-def onehot_encode(Y, n_classes=10):
-    onehot = np.zeros((Y.shape[0], n_classes))
-    onehot[np.arange(0, Y.shape[0]), Y] = 1
-    return onehot
-
-
-def bias_trick(X):
-    """
-    X: shape[batch_size, num_features(784)]
-    -- 
-    Returns [batch_size, num_features+1 ]
-    """
-    return np.concatenate((X, np.ones((len(X), 1))), axis=1)
-
-
-def check_gradient(X, targets, w, epsilon, computed_gradient):
-    """
-    Computes the numerical approximation for the gradient of w,
-    w.r.t. the input X and target vector targets.
-    Asserts that the computed_gradient from backpropagation is 
-    correct w.r.t. the numerical approximation.
-    --
-    X: shape: [batch_size, num_features(784+1)]. Input batch of images
-    targets: shape: [batch_size, num_classes]. Targets/label of images
-    w: shape: [num_classes, num_features]. Weight from input->output
-    epsilon: Epsilon for numerical approximation (See assignment)
-    computed_gradient: Gradient computed from backpropagation. Same shape as w.
-    """
-    print("Checking gradient...")
-    dw = np.zeros_like(w)
-    for k in range(w.shape[0]):
-        for j in range(w.shape[1]):
-            new_weight1, new_weight2 = np.copy(w), np.copy(w)
-            new_weight1[k,j] += epsilon
-            new_weight2[k,j] -= epsilon
-            loss1 = cross_entropy_loss(X, targets, new_weight1)
-            loss2 = cross_entropy_loss(X, targets, new_weight2)
-            dw[k,j] = (loss1 - loss2) / (2*epsilon)
-    maximum_abosulte_difference = abs(computed_gradient-dw).max()
-    assert maximum_abosulte_difference <= epsilon**2, "Absolute error was: {}".format(maximum_abosulte_difference)
-
-
-def softmax(a):
-    """
-    Applies the softmax activation function for the vector a.
-    --
-    a: shape: [batch_size, num_classes]. Activation of the output layer before activation
-    --
-    Returns: [batch_size, num_classes] numpy vector
-    """
-    a_exp = np.exp(a)
-    return a_exp / a_exp.sum(axis=1, keepdims=True)
 
 def sigmoid(z):
     return 1.0/(1.0+np.exp(-z))
 
+
 def sigmoid_prime(z):
     return np.multiply(sigmoid(z), 1-sigmoid(z))
+
 
 def tanh_sigmoid(z):
     return 1.7159*np.tanh((2.0/3.0)*z) + 0.01*z
 
+
 def tanh_sigmoid_prime(z):
     return 1.7159*(2.0/3.0)*(1/((np.cosh(2.0/3.0*z))**2)) + 0.01
 
-def forward(X, w1, w2):
-    """
-    Performs a forward pass through the network
-    --
-    X: shape: [batch_size, num_features(784+1)] numpy vector. Input batch of images
-    w: shape: [num_classes, num_features] numpy vector. Weight from input->output
-    --
-    Returns: [batch_size, num_classes] numpy vector
-    """
-    a1 = tanh_sigmoid(X.dot(w1.T))
-    a2 = softmax(a1.dot(w2.T))
 
-    return a2
+def softmax(z):
+    z_exp = np.exp(z)
+    return z_exp / z_exp.sum(axis=1, keepdims=True)
 
 
-def calculate_accuracy(X, targets, w1, w2):
+def forwards(x, layers):
+
+    # add input layer activation
+    layer_activation = layers[0].update_activation(x)
+
+    # add hidden layer activations
+    for i in range(1, len(layers)-1):
+        layer_activation = layers[i].update_activation(layer_activation)
+
+    # add output layer activation
+    layers[-1].update_activation(layer_activation)
+    return layers
+
+
+def dw(delta, w):
+    return np.dot(delta, w)
+
+
+def backpropagate(x, t, layers, learning_rate):
+    layers = forwards(x, layers)
+    outputs = layers[-1].a
+    normalization_factor = x.shape[0] * t.shape[1]
+
+    for i in range(len(layers)-1, -1, -1):
+        if i == len(layers)-1:
+            layers[i].delta = -(t-outputs)
+        else:
+            layers[i].delta = np.multiply(layers[i].activation_func_prime(layers[i].z), np.dot(layers[i+1].delta, layers[i+1].weights))
+
+    for i in range(len(layers)):
+        if i==0:
+            layers[i].dw = layers[i].delta.T.dot(x) / normalization_factor
+        else:
+            layers[i].dw = layers[i].delta.T.dot(layers[i-1].a) / normalization_factor
+
+
+    for i in range(len(layers)):
+        layers[i].weights -= learning_rate*layers[i].dw
+
+    return layers
+
+
+def calculate_accuracy(X, targets, layers):
     """
     Calculated the accuracy of the network.
     ---
@@ -137,13 +122,13 @@ def calculate_accuracy(X, targets, w1, w2):
     --
     Returns float
     """
-    output = forward(X, w1, w2)
+    output = forwards(X, layers)[-1].a
     predictions = output.argmax(axis=1)
     targets = targets.argmax(axis=1)
     return (predictions == targets).mean()
 
 
-def cross_entropy_loss(X, targets, w1, w2):
+def cross_entropy_loss(X, targets, layers):
     """
     Computes the cross entropy loss given the input vector X and the target vector.
     ---
@@ -153,69 +138,44 @@ def cross_entropy_loss(X, targets, w1, w2):
     --
     Returns float
     """
-    output = forward(X, w1, w2)
-    assert output.shape == targets.shape 
+    output = forwards(X, layers)[-1].a
+    assert output.shape == targets.shape
     log_y = np.log(output)
     cross_entropy = -targets * log_y
     return cross_entropy.mean()
 
+class Layer:
+    def __init__(self, input_size, output_size, activation_func, activation_func_prime):
+        self.delta = 0
+        self.weights = np.random.randn(output_size, input_size) * (1/np.sqrt(input_size))
+        self.activation_func = activation_func
+        self.activation_func_prime = activation_func_prime
+        self.z = 0
+        self.a = 0
+        self.dw = 0
 
-prev_dw1, prev_dw2 = 0, 0
-
-
-def gradient_descent(X, targets, w1, w2, learning_rate, should_check_gradient):
-    global prev_dw1, prev_dw2
-    """
-    Performs gradient descents for all weights in the network.
-    ---
-    X: shape: [batch_size, num_features(784+1)] numpy vector. Input batch of images
-    targets: shape: [batch_size, num_classes] numpy vector. Targets/label of images
-    w: shape: [num_classes, num_features] numpy vector. Weight from input->output
-    --
-    Returns updated w, with same shape
-    """
-
-    # Since we are taking the .mean() of our loss, we get the normalization factor to be 1/(N*C)
-    # If you take loss.sum(), the normalization factor is 1.
-    # The normalization factor is identical for all weights in the network (For multi-layer neural-networks as well.)
-    normalization_factor = X.shape[0] * targets.shape[1] # batch_size * num_classes
-    outputs = forward(X, w1, w2)
-    delta_k = - (targets - outputs)
-    z = X.dot(w1.T)
-    activation = tanh_sigmoid(z)
-
-    inside_parentheses = np.multiply(tanh_sigmoid_prime(z), np.dot(delta_k, w2))
-
-    dw1 = np.dot(inside_parentheses.T, X)
-    dw2 = delta_k.T.dot(activation)
-
-    dw1 = dw1 / normalization_factor  # Normalize gradient equally as we do with the loss
-    dw2 = dw2 / normalization_factor  # Normalize gradient equally as we do with the loss
-    assert dw1.shape == w1.shape, "dw shape was: {}. Expected: {}".format(dw1.shape, w1.shape)
-    assert dw2.shape == w2.shape, "dw shape was: {}. Expected: {}".format(dw2.shape, w2.shape)
-
-    if should_check_gradient:
-        check_gradient(X, targets, w1, 1e-2,  dw1)
-        check_gradient(X, targets, w2, 1e-2,  dw2)
-
-    w1 = w1 - learning_rate * dw1 - 0.9*prev_dw1
-    w2 = w2 - learning_rate * dw2 - 0.9*prev_dw2
-    prev_dw1 = dw1
-    prev_dw2 = dw2
-    return w1, w2
+    def update_activation(self, x):
+        self.z = x.dot(self.weights.T)
+        self.a = self.activation_func(self.z)
+        return self.a
 
 
-#mnist.init()
-x_train, Y_train, X_test, Y_test = mnist.load()
+
+# mnist.init()
+x_train, y_train, x_test, y_test = mnist.load()
+
 
 # Pre-process data
-x_train, X_test = (x_train / 127.5) - 1, (X_test / 127.5) - 1
+x_train, x_test = (x_train / 127.5) - 1, (x_test / 127.5) - 1
 x_train = bias_trick(x_train)
-X_test = bias_trick(X_test)
-Y_train, Y_test = onehot_encode(Y_train), onehot_encode(Y_test)
+x_test = bias_trick(x_test)
+y_train, y_test = onehot_encode(y_train), onehot_encode(y_test)
 
-x_train, Y_train, X_val, Y_val = train_val_split(x_train, Y_train, 0.1)
+x_train, y_train, x_val, y_val = train_val_split(x_train, y_train, 0.1)
 
+layers = []
+layers.append(Layer(785,32,sigmoid, sigmoid_prime))
+layers.append(Layer(32,10,softmax, None))
 
 # Hyperparameters
 batch_size = 128
@@ -223,8 +183,7 @@ learning_rate = 1
 num_batches = x_train.shape[0] // batch_size
 should_gradient_check = False
 check_step = num_batches // 10
-max_epochs = 5
-layer_sizes = [785, 32, 10]
+max_epochs = 40
 
 # Tracking variables
 TRAIN_LOSS = []
@@ -236,51 +195,43 @@ VAL_ACC = []
 
 
 def train_loop():
-    global x_train, Y_train
-    standard_deviation_1 = 1/np.sqrt(785)
-    standard_deviation_2 = 1/np.sqrt(128)
-    w1 = np.random.randn(128, X_train.shape[1])*standard_deviation_1
-    w2 = np.random.randn(Y_train.shape[1], 128)*standard_deviation_2
+    global x_train, y_train, x_val, y_val, x_test, y_test, layers
     for e in range(max_epochs):  # Epochs
-        X_train, Y_train = shuffle_training_sets(X_train, Y_train)
+        x_train, Y_train = shuffle_training_sets(x_train, y_train)
         for i in tqdm.trange(num_batches):
-            X_batch = X_train[i*batch_size:(i+1)*batch_size]
+            X_batch = x_train[i * batch_size:(i+1) * batch_size]
             Y_batch = Y_train[i*batch_size:(i+1)*batch_size]
 
-            w1, w2 = gradient_descent(X_batch,
-                                 Y_batch,
-                                 w1, w2,
-                                 learning_rate,
-                                 should_gradient_check)
+            layers = backpropagate(X_batch, Y_batch, layers, learning_rate)
             if i % check_step == 0:
                 # Loss
-                TRAIN_LOSS.append(cross_entropy_loss(X_train, Y_train, w1, w2))
-                TEST_LOSS.append(cross_entropy_loss(X_test, Y_test, w1, w2))
-                VAL_LOSS.append(cross_entropy_loss(X_val, Y_val, w1, w2))
+                TRAIN_LOSS.append(cross_entropy_loss(x_train, Y_train, layers))
+                TEST_LOSS.append(cross_entropy_loss(x_test, y_test, layers))
+                VAL_LOSS.append(cross_entropy_loss(x_val, y_val, layers))
 
-                TRAIN_ACC.append(calculate_accuracy(X_train, Y_train, w1, w2))
-                VAL_ACC.append(calculate_accuracy(X_val, Y_val, w1, w2))
-                TEST_ACC.append(calculate_accuracy(X_test, Y_test, w1, w2))
+                TRAIN_ACC.append(calculate_accuracy(x_train, Y_train, layers))
+                VAL_ACC.append(calculate_accuracy(x_val, x_val, layers))
+                TEST_ACC.append(calculate_accuracy(x_test, y_test, layers))
                 if should_early_stop(VAL_LOSS):
                     print(VAL_LOSS[-4:])
                     print("early stopping.")
-                    return w1, w2
-    return w1, w2
+                    return layers
+    return layers
 
 
-w1, w2 = train_loop()
+layers = train_loop()
 plt.plot(TRAIN_LOSS, label="Training loss")
 plt.plot(TEST_LOSS, label="Testing loss")
 plt.plot(VAL_LOSS, label="Validation loss")
 plt.legend()
-plt.ylim([0, 0.15])
+plt.ylim([0, 1.0])
 plt.show()
 
 plt.clf()
 plt.plot(TRAIN_ACC, label="Training accuracy")
 plt.plot(TEST_ACC, label="Testing accuracy")
 plt.plot(VAL_ACC, label="Validation accuracy")
-plt.ylim([0.5, 1.0])
+plt.ylim([0, 1.0])
 plt.legend()
 plt.show()
 
@@ -292,8 +243,3 @@ w = np.concatenate(w2, axis=0)
 plt.imshow(w, cmap="gray")
 plt.show()
 '''
-
-
-
-
-

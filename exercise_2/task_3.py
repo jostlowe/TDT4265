@@ -41,7 +41,7 @@ def train_val_split(X, Y, val_percentage):
 
 def shuffle_training_sets(X, Y):
     """
-    Function to shuffle training sets after each epoch according to task 2a
+    Function to shuffle training sets after each epoch according to task 3a
     """
     dataset_size = X.shape[0]
     id = np.arange(0, dataset_size)
@@ -130,6 +130,8 @@ def forward(X, w1, w2):
     --
     Returns: [batch_size, num_classes] numpy vector
     """
+
+
     a1 = tanh_sigmoid(X.dot(w1.T)) #Task 3b
     a2 = softmax(a1.dot(w2.T))
 
@@ -191,9 +193,10 @@ def gradient_descent(X, targets, w1, w2, learning_rate, should_check_gradient):
     outputs = forward(X, w1, w2)
     delta_k = - (targets - outputs)
     z = X.dot(w1.T)
-    activation = tanh_sigmoid(z) #Task 2b
 
-    inside_parentheses = np.multiply(tanh_sigmoid_prime(z), np.dot(delta_k, w2)) #Task 2b
+    activation = tanh_sigmoid(z) #Task 3b
+    inside_parentheses = np.multiply(tanh_sigmoid_prime(z), np.dot(delta_k, w2)) #Task 3b
+
 
     dw1 = np.dot(inside_parentheses.T, X)
     dw2 = delta_k.T.dot(activation)
@@ -215,26 +218,26 @@ def gradient_descent(X, targets, w1, w2, learning_rate, should_check_gradient):
 
 
 #mnist.init()
-x_train, Y_train, X_test, Y_test = mnist.load()
+X_train, Y_train, X_test, Y_test = mnist.load()
 
 # Pre-process data
-x_train, X_test = (x_train / 127.5) - 1, (X_test / 127.5) - 1
-x_train = bias_trick(x_train)
+X_train, X_test = (X_train / 127.5) - 1, (X_test / 127.5) - 1
+X_train = bias_trick(X_train)
 X_test = bias_trick(X_test)
 Y_train, Y_test = onehot_encode(Y_train), onehot_encode(Y_test)
 
-x_train, Y_train, X_val, Y_val = train_val_split(x_train, Y_train, 0.1)
+X_train, Y_train, X_val, Y_val = train_val_split(X_train, Y_train, 0.1)
 
 
 # Hyperparameters
 batch_size = 128
 learning_rate = 1
-num_batches = x_train.shape[0] // batch_size
+num_batches = X_train.shape[0] // batch_size
 should_gradient_check = False
 check_step = num_batches // 10
-max_epochs = 5
+max_epochs = 40
 layer_sizes = [785, 64, 10]
-momentum = 0.9 #Momentum constant according to task 3d
+momentum = 0#.9 #Momentum constant according to task 3d
 
 # Tracking variables
 TRAIN_LOSS = []
@@ -246,13 +249,13 @@ VAL_ACC = []
 
 
 def train_loop():
-    global x_train, Y_train
+    global X_train, Y_train
     standard_deviation_1 = 1/np.sqrt(785)
     standard_deviation_2 = 1/np.sqrt(64)
     w1 = np.random.randn(64, X_train.shape[1])*standard_deviation_1 #Standard deviation implemented according to task 3c
     w2 = np.random.randn(Y_train.shape[1], 64)*standard_deviation_2 #Standard deviation implemented according to task 3c
     for e in range(max_epochs):  # Epochs
-        X_train, Y_train = shuffle_training_sets(X_train, Y_train)
+        X_train, Y_train = shuffle_training_sets(X_train, Y_train) #Shuffling training data according to task 3a
         for i in tqdm.trange(num_batches):
             X_batch = X_train[i*batch_size:(i+1)*batch_size]
             Y_batch = Y_train[i*batch_size:(i+1)*batch_size]
@@ -283,14 +286,14 @@ plt.plot(TRAIN_LOSS, label="Training loss")
 plt.plot(TEST_LOSS, label="Testing loss")
 plt.plot(VAL_LOSS, label="Validation loss")
 plt.legend()
-plt.ylim([0, 0.15])
+plt.ylim([0, 1])
 plt.show()
 
 plt.clf()
 plt.plot(TRAIN_ACC, label="Training accuracy")
 plt.plot(TEST_ACC, label="Testing accuracy")
 plt.plot(VAL_ACC, label="Validation accuracy")
-plt.ylim([0.5, 1.0])
+plt.ylim([0, 1])
 plt.legend()
 plt.show()
 
