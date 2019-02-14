@@ -184,21 +184,21 @@ def gradient_descent(X, targets, w1, w2, learning_rate, should_check_gradient):
 
 
 #mnist.init()
-X_train, Y_train, X_test, Y_test = mnist.load()
+x_train, Y_train, X_test, Y_test = mnist.load()
 
 # Pre-process data
-X_train, X_test = (X_train/127.5)-1, (X_test/127.5)-1
-X_train = bias_trick(X_train)
+x_train, X_test = (x_train / 127.5) - 1, (X_test / 127.5) - 1
+x_train = bias_trick(x_train)
 X_test = bias_trick(X_test)
 Y_train, Y_test = onehot_encode(Y_train), onehot_encode(Y_test)
 
-X_train, Y_train, X_val, Y_val = train_val_split(X_train, Y_train, 0.1)
+x_train, Y_train, X_val, Y_val = train_val_split(x_train, Y_train, 0.1)
 
 
 # Hyperparameters
 batch_size = 128
 learning_rate = 1
-num_batches = X_train.shape[0] // batch_size
+num_batches = x_train.shape[0] // batch_size
 should_gradient_check = False
 check_step = num_batches // 10
 max_epochs = 40
@@ -214,11 +214,11 @@ VAL_ACC = []
 
 
 def train_loop():
-    w1 = np.random.uniform(-1, 1, (64, X_train.shape[1]))
+    w1 = np.random.uniform(-1, 1, (64, x_train.shape[1]))
     w2 = np.random.uniform(-1, 1, (Y_train.shape[1], 64))
     for e in range(max_epochs):  # Epochs
         for i in tqdm.trange(num_batches):
-            X_batch = X_train[i*batch_size:(i+1)*batch_size]
+            X_batch = x_train[i * batch_size:(i + 1) * batch_size]
             Y_batch = Y_train[i*batch_size:(i+1)*batch_size]
 
             w1, w2 = gradient_descent(X_batch,
@@ -228,11 +228,11 @@ def train_loop():
                                  should_gradient_check)
             if i % check_step == 0:
                 # Loss
-                TRAIN_LOSS.append(cross_entropy_loss(X_train, Y_train, w1, w2))
+                TRAIN_LOSS.append(cross_entropy_loss(x_train, Y_train, w1, w2))
                 TEST_LOSS.append(cross_entropy_loss(X_test, Y_test, w1, w2))
                 VAL_LOSS.append(cross_entropy_loss(X_val, Y_val, w1, w2))
 
-                TRAIN_ACC.append(calculate_accuracy(X_train, Y_train, w1, w2))
+                TRAIN_ACC.append(calculate_accuracy(x_train, Y_train, w1, w2))
                 VAL_ACC.append(calculate_accuracy(X_val, Y_val, w1, w2))
                 TEST_ACC.append(calculate_accuracy(X_test, Y_test, w1, w2))
                 if should_early_stop(VAL_LOSS):

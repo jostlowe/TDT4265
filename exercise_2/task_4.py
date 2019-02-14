@@ -206,21 +206,21 @@ def gradient_descent(X, targets, w1, w2, learning_rate, should_check_gradient):
 
 
 #mnist.init()
-X_train, Y_train, X_test, Y_test = mnist.load()
+x_train, Y_train, X_test, Y_test = mnist.load()
 
 # Pre-process data
-X_train, X_test = (X_train/127.5)-1, (X_test/127.5)-1
-X_train = bias_trick(X_train)
+x_train, X_test = (x_train / 127.5) - 1, (X_test / 127.5) - 1
+x_train = bias_trick(x_train)
 X_test = bias_trick(X_test)
 Y_train, Y_test = onehot_encode(Y_train), onehot_encode(Y_test)
 
-X_train, Y_train, X_val, Y_val = train_val_split(X_train, Y_train, 0.1)
+x_train, Y_train, X_val, Y_val = train_val_split(x_train, Y_train, 0.1)
 
 
 # Hyperparameters
 batch_size = 128
 learning_rate = 1
-num_batches = X_train.shape[0] // batch_size
+num_batches = x_train.shape[0] // batch_size
 should_gradient_check = False
 check_step = num_batches // 10
 max_epochs = 5
@@ -236,7 +236,7 @@ VAL_ACC = []
 
 
 def train_loop():
-    global X_train, Y_train
+    global x_train, Y_train
     standard_deviation_1 = 1/np.sqrt(785)
     standard_deviation_2 = 1/np.sqrt(128)
     w1 = np.random.randn(128, X_train.shape[1])*standard_deviation_1
