@@ -16,7 +16,7 @@ def should_early_stop(validation_loss, num_steps=3):
         return False
 
     is_increasing = [validation_loss[i] <= validation_loss[i+1] for i in range(-num_steps-1, -1)]
-    return sum(is_increasing) == len(is_increasing) 
+    return sum(is_increasing) == len(is_increasing)
 
 
 def train_val_split(X, Y, val_percentage):
@@ -40,6 +40,9 @@ def train_val_split(X, Y, val_percentage):
     return X_train, Y_train, X_val, Y_val
 
 def shuffle_training_sets(X, Y):
+    """
+    Function to shuffle training sets after each epoch according to task 2a
+    """
     dataset_size = X.shape[0]
     id = np.arange(0, dataset_size)
     np.random.shuffle(id)
@@ -56,7 +59,7 @@ def onehot_encode(Y, n_classes=10):
 def bias_trick(X):
     """
     X: shape[batch_size, num_features(784)]
-    -- 
+    --
     Returns [batch_size, num_features+1 ]
     """
     return np.concatenate((X, np.ones((len(X), 1))), axis=1)
@@ -66,7 +69,7 @@ def check_gradient(X, targets, w, epsilon, computed_gradient):
     """
     Computes the numerical approximation for the gradient of w,
     w.r.t. the input X and target vector targets.
-    Asserts that the computed_gradient from backpropagation is 
+    Asserts that the computed_gradient from backpropagation is
     correct w.r.t. the numerical approximation.
     --
     X: shape: [batch_size, num_features(784+1)]. Input batch of images
@@ -107,9 +110,15 @@ def sigmoid_prime(z):
     return np.multiply(sigmoid(z), 1-sigmoid(z))
 
 def tanh_sigmoid(z):
+    """
+    Improved sigmoid function implemented according to task 3b
+    """
     return 1.7159*np.tanh((2.0/3.0)*z) + 0.01*z
 
 def tanh_sigmoid_prime(z):
+    """
+    Gradient of improved sigmoid function implemented according to task 3b
+    """
     return 1.7159*(2.0/3.0)*(1/((np.cosh(2.0/3.0*z))**2)) + 0.01
 
 def forward(X, w1, w2):
@@ -121,7 +130,7 @@ def forward(X, w1, w2):
     --
     Returns: [batch_size, num_classes] numpy vector
     """
-    a1 = tanh_sigmoid(X.dot(w1.T))
+    a1 = tanh_sigmoid(X.dot(w1.T)) #Task 3b
     a2 = softmax(a1.dot(w2.T))
 
     return a2
@@ -154,7 +163,7 @@ def cross_entropy_loss(X, targets, w1, w2):
     Returns float
     """
     output = forward(X, w1, w2)
-    assert output.shape == targets.shape 
+    assert output.shape == targets.shape
     log_y = np.log(output)
     cross_entropy = -targets * log_y
     return cross_entropy.mean()
@@ -182,9 +191,9 @@ def gradient_descent(X, targets, w1, w2, learning_rate, should_check_gradient):
     outputs = forward(X, w1, w2)
     delta_k = - (targets - outputs)
     z = X.dot(w1.T)
-    activation = tanh_sigmoid(z)
+    activation = tanh_sigmoid(z) #Task 2b
 
-    inside_parentheses = np.multiply(tanh_sigmoid_prime(z), np.dot(delta_k, w2))
+    inside_parentheses = np.multiply(tanh_sigmoid_prime(z), np.dot(delta_k, w2)) #Task 2b
 
     dw1 = np.dot(inside_parentheses.T, X)
     dw2 = delta_k.T.dot(activation)
@@ -198,8 +207,8 @@ def gradient_descent(X, targets, w1, w2, learning_rate, should_check_gradient):
         check_gradient(X, targets, w1, 1e-2,  dw1)
         check_gradient(X, targets, w2, 1e-2,  dw2)
 
-    w1 = w1 - learning_rate * dw1 - 0.9*prev_dw1
-    w2 = w2 - learning_rate * dw2 - 0.9*prev_dw2
+    w1 = w1 - learning_rate * dw1 - momentum*prev_dw1 #Task 3d
+    w2 = w2 - learning_rate * dw2 - momentum*prev_dw2 #Task 3d
     prev_dw1 = dw1
     prev_dw2 = dw2
     return w1, w2
@@ -225,6 +234,7 @@ should_gradient_check = False
 check_step = num_batches // 10
 max_epochs = 5
 layer_sizes = [785, 64, 10]
+momentum = 0.9 #Momentum constant according to task 3d
 
 # Tracking variables
 TRAIN_LOSS = []
@@ -239,8 +249,8 @@ def train_loop():
     global x_train, Y_train
     standard_deviation_1 = 1/np.sqrt(785)
     standard_deviation_2 = 1/np.sqrt(64)
-    w1 = np.random.randn(64, X_train.shape[1])*standard_deviation_1
-    w2 = np.random.randn(Y_train.shape[1], 64)*standard_deviation_2
+    w1 = np.random.randn(64, X_train.shape[1])*standard_deviation_1 #Standard deviation implemented according to task 3c
+    w2 = np.random.randn(Y_train.shape[1], 64)*standard_deviation_2 #Standard deviation implemented according to task 3c
     for e in range(max_epochs):  # Epochs
         X_train, Y_train = shuffle_training_sets(X_train, Y_train)
         for i in tqdm.trange(num_batches):
@@ -292,8 +302,3 @@ w = np.concatenate(w2, axis=0)
 plt.imshow(w, cmap="gray")
 plt.show()
 '''
-
-
-
-
-
