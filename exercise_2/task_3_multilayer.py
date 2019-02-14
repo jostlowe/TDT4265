@@ -199,10 +199,10 @@ def train_loop():
     for e in range(max_epochs):  # Epochs
         x_train, Y_train = shuffle_training_sets(x_train, y_train)
         for i in tqdm.trange(num_batches):
-            X_batch = x_train[i * batch_size:(i + 1) * batch_size]
+            X_batch = x_train[i * batch_size:(i+1) * batch_size]
             Y_batch = Y_train[i*batch_size:(i+1)*batch_size]
 
-            layers = backpropagate(X_batch, Y_batch, layers,learning_rate)
+            layers = backpropagate(X_batch, Y_batch, layers, learning_rate)
             if i % check_step == 0:
                 # Loss
                 TRAIN_LOSS.append(cross_entropy_loss(x_train, Y_train, layers))
