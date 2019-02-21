@@ -174,8 +174,9 @@ y_train, y_test = onehot_encode(y_train), onehot_encode(y_test)
 x_train, y_train, x_val, y_val = train_val_split(x_train, y_train, 0.1)
 
 layers = []
-layers.append(Layer(785,64,sigmoid, sigmoid_prime))
-layers.append(Layer(64,10,softmax, None))
+layers.append(Layer(785,32,sigmoid, sigmoid_prime))
+layers.append(Layer(32,32,sigmoid, sigmoid_prime))
+layers.append(Layer(32,10,softmax, None))
 
 # Hyperparameters
 batch_size = 128
