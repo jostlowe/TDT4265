@@ -1,7 +1,7 @@
 import os
 import matplotlib.pyplot as plt
 import torch
-from torch import nn
+from torch import nn, optim
 from dataloaders import load_cifar10
 from utils import to_cuda, compute_loss_and_accuracy
 
@@ -22,26 +22,51 @@ class ExampleModel(nn.Module):
 
         # Define the convolutional layers
         self.feature_extractor = nn.Sequential(
+            # [32x32x3]
             nn.Conv2d(
-                in_channels=image_channels,
-                out_channels=num_filters,
+                in_channels=3,
+                out_channels=32,
                 kernel_size=5,
                 stride=1,
                 padding=2
             ),
+            # [32x32x32]
             nn.MaxPool2d(kernel_size=2, stride=2),
-            nn.ReLU()
+            # [16x16x32]
+            nn.Conv2d(
+                in_channels=32,
+                out_channels=64,
+                kernel_size=5,
+                stride=1,
+                padding=2
+            ),
+            # [16x16x64]
+            nn.MaxPool2d(kernel_size=2, stride=2),
+            # [8x8x64]
+            nn.Conv2d(
+                in_channels=64,
+                out_channels=128,
+                kernel_size=5,
+                stride=1,
+                padding=2
+            ),
+            # [8x8x128]
+            nn.MaxPool2d(kernel_size=2, stride=2),
+            # [4x4x128]
         )
         # The output of feature_extractor will be [batch_size, num_filters, 16, 16]
-        self.num_output_features = 32*16*16
+        self.num_output_features = 128*4*4
         # Initialize our last fully connected layer
         # Inputs all extracted features from the convolutional layers
         # Outputs num_classes predictions, 1 for each class.
         # There is no need for softmax activation function, as this is
         # included with nn.CrossEntropyLoss
         self.classifier = nn.Sequential(
-            nn.Linear(self.num_output_features, num_classes),
+            nn.Linear(self.num_output_features, 64),
+            nn.ReLU(),
+            nn.Linear(64, num_classes),
         )
+
 
     def forward(self, x):
         """
