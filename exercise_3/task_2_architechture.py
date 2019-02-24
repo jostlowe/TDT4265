@@ -25,9 +25,11 @@ class ExampleModel(nn.Module):
 
             # [32x32x3] before 1st conv layer
             nn.Conv2d(3, 32, kernel_size=5, stride=1, padding=2),
+            nn.ReLU(),
             nn.BatchNorm2d(32),
             # [32x32x32] before 2nd conv layer
             nn.Conv2d(32, 32, kernel_size=5, stride=1, padding=2),
+            nn.ReLU(),
             nn.BatchNorm2d(32),
             # [32x32x32] before pooling
             nn.MaxPool2d(kernel_size=2, stride=2),
@@ -37,9 +39,11 @@ class ExampleModel(nn.Module):
 
             # [16x16x32] before 3rd conv layer
             nn.Conv2d(32, 64, kernel_size=5, stride=1, padding=2),
+            nn.ReLU(),
             nn.BatchNorm2d(64),
             # [16x16x32] before 4th conv layer
             nn.Conv2d(64, 64, kernel_size=5, stride=1, padding=2),
+            nn.ReLU(),
             nn.BatchNorm2d(64),
             # [16x16x64] before pooling
             nn.MaxPool2d(kernel_size=2, stride=2),
@@ -49,8 +53,10 @@ class ExampleModel(nn.Module):
 
             # [8x8x64] before 5th conv layer
             nn.Conv2d(64, 128, kernel_size=5, stride=1, padding=2),
+            nn.ReLU(),
             nn.BatchNorm2d(128),
             nn.Conv2d(128, 128, kernel_size=5, stride=1, padding=2),
+            nn.ReLU(),
             nn.BatchNorm2d(128),
             # [8x8x128] before pooling
             nn.MaxPool2d(kernel_size=2, stride=2),
