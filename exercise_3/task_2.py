@@ -54,6 +54,8 @@ class ExampleModel(nn.Module):
             nn.MaxPool2d(kernel_size=2, stride=2),
             # [4x4x128]
         )
+
+        self.feature_extractor.apply(self.init_weights)
         # The output of feature_extractor will be [batch_size, num_filters, 16, 16]
         self.num_output_features = 128*4*4
         # Initialize our last fully connected layer
@@ -66,7 +68,12 @@ class ExampleModel(nn.Module):
             nn.ReLU(),
             nn.Linear(64, num_classes),
         )
+        self.classifier.apply(self.init_weights)
 
+    def init_weights(self, layer):
+        if type(layer) in [nn.Conv2d, nn.Linear]:
+            nn.init.xavier_uniform_(layer.weight)
+            layer.bias.data.fill_(0.01)
 
     def forward(self, x):
         """
