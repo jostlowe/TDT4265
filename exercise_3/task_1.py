@@ -31,6 +31,7 @@ class ExampleModel(nn.Module):
                 padding=2
             ),
             # [32x32x32]
+            nn.ReLU(),
             nn.MaxPool2d(kernel_size=2, stride=2),
             # [16x16x32]
             nn.Conv2d(
@@ -41,6 +42,7 @@ class ExampleModel(nn.Module):
                 padding=2
             ),
             # [16x16x64]
+            nn.ReLU(),
             nn.MaxPool2d(kernel_size=2, stride=2),
             # [8x8x64]
             nn.Conv2d(
@@ -50,6 +52,7 @@ class ExampleModel(nn.Module):
                 stride=1,
                 padding=2
             ),
+            nn.ReLU(),
             # [8x8x128]
             nn.MaxPool2d(kernel_size=2, stride=2),
             # [4x4x128]
@@ -94,7 +97,7 @@ class Trainer:
         # Define hyperparameters
         self.epochs = 100
         self.batch_size = 64
-        self.learning_rate = 5e-2
+        self.learning_rate = 1e-2
         self.early_stop_count = 4
 
         # Architecture
