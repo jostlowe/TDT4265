@@ -46,7 +46,7 @@ class ExampleModel(nn.Module):
             nn.ReLU(),
             nn.BatchNorm2d(64),
             # [16x16x64] before pooling
-            nn.MaxPool2d(kernel_size=5, stride=2),
+            nn.MaxPool2d(kernel_size=2, stride=2),
             nn.Dropout(0.3),
             # [8x8x64] after pooling
 
