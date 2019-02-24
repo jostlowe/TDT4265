@@ -32,6 +32,15 @@ class ExampleModel(nn.Module):
             ),
             # [32x32x32]
             nn.BatchNorm2d(32),
+            nn.Conv2d(
+                in_channels=32,
+                out_channels=32,
+                kernel_size=5,
+                stride=1,
+                padding=2
+            ),
+            # [32x32x32]
+            nn.BatchNorm2d(32),
             nn.MaxPool2d(kernel_size=2, stride=2),
             # [16x16x32]
             nn.Conv2d(
