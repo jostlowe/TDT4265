@@ -67,11 +67,11 @@ class ExampleModel(nn.Module):
         # There is no need for softmax activation function, as this is
         # included with nn.CrossEntropyLoss
         self.classifier = nn.Sequential(
-            #nn.Linear(self.num_output_features, 64),
-            #nn.ReLU(),
-            #nn.Linear(64, num_classes),
+            nn.Linear(self.num_output_features, 64),
             nn.ReLU(),
-            nn.Linear(self.num_output_features, num_classes),
+            nn.Linear(64, num_classes),
+            #nn.ReLU(),
+            #nn.Linear(self.num_output_features, num_classes),
         )
         self.classifier.apply(self.init_weights)
 
