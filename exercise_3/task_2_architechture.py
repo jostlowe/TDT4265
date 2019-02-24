@@ -26,35 +26,36 @@ class ExampleModel(nn.Module):
             # [32x32x3] before 1st conv layer
             nn.Conv2d(3, 32, kernel_size=5, stride=1, padding=2),
             nn.BatchNorm2d(32),
-
             # [32x32x32] before 2nd conv layer
             nn.Conv2d(32, 32, kernel_size=5, stride=1, padding=2),
             nn.BatchNorm2d(32),
-
             # [32x32x32] before pooling
             nn.MaxPool2d(kernel_size=2, stride=2),
             nn.Dropout(0.2),
             # [16x16x32] after pooling
 
+
             # [16x16x32] before 3rd conv layer
             nn.Conv2d(32, 64, kernel_size=5, stride=1, padding=2),
             nn.BatchNorm2d(64),
-
             # [16x16x32] before 4th conv layer
             nn.Conv2d(64, 64, kernel_size=5, stride=1, padding=2),
             nn.BatchNorm2d(64),
-
             # [16x16x64] before pooling
             nn.MaxPool2d(kernel_size=2, stride=2),
+            nn.Dropout(0.3),
             # [8x8x64] after pooling
+
 
             # [8x8x64] before 5th conv layer
             nn.Conv2d(64, 128, kernel_size=5, stride=1, padding=2),
             nn.BatchNorm2d(128),
-
+            nn.Conv2d(128, 128, kernel_size=5, stride=1, padding=2),
+            nn.BatchNorm2d(128),
             # [8x8x128] before pooling
             nn.MaxPool2d(kernel_size=2, stride=2),
             # [4x4x128] after pooling
+            nn.Dropout(0.4),
         )
 
         self.feature_extractor.apply(self.init_weights)
@@ -66,9 +67,11 @@ class ExampleModel(nn.Module):
         # There is no need for softmax activation function, as this is
         # included with nn.CrossEntropyLoss
         self.classifier = nn.Sequential(
-            nn.Linear(self.num_output_features, 64),
+            #nn.Linear(self.num_output_features, 64),
+            #nn.ReLU(),
+            #nn.Linear(64, num_classes),
             nn.ReLU(),
-            nn.Linear(64, num_classes),
+            nn.Linear(self.num_output_features, num_classes),
         )
         self.classifier.apply(self.init_weights)
 
