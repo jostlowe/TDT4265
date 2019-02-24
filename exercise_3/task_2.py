@@ -31,6 +31,7 @@ class ExampleModel(nn.Module):
                 padding=2
             ),
             # [32x32x32]
+            nn.ReLU(),
             nn.MaxPool2d(kernel_size=2, stride=2),
             # [16x16x32]
             nn.Conv2d(
@@ -41,6 +42,7 @@ class ExampleModel(nn.Module):
                 padding=2
             ),
             # [16x16x64]
+            nn.ReLU(),
             nn.MaxPool2d(kernel_size=2, stride=2),
             # [8x8x64]
             nn.Conv2d(
@@ -51,6 +53,7 @@ class ExampleModel(nn.Module):
                 padding=2
             ),
             # [8x8x128]
+            nn.ReLU(),
             nn.MaxPool2d(kernel_size=2, stride=2),
             # [4x4x128]
         )
