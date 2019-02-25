@@ -2,90 +2,28 @@ import os
 import matplotlib.pyplot as plt
 import torch
 from torch import nn, optim
+import torchvision
 from dataloaders import load_cifar10
 from utils import to_cuda, compute_loss_and_accuracy
 
 
 class ExampleModel(nn.Module):
-
-    def __init__(self,
-                 image_channels,
-                 num_classes):
-        """
-            Is called when model is initialized.
-            Args:
-                image_channels. Number of color channels in image (3)
-                num_classes: Number of classes we want to predict (10)
-        """
+    def __init__(self):
         super().__init__()
-        num_filters = 32  # Set number of filters in first conv layer
+        self.model = torchvision.models.resnet18(pretrained=True)
+        self.model.fc = nn.Linear(512*4, 10)
 
-        # Define the convolutional layers
-        self.feature_extractor = nn.Sequential(
-            # [32x32x3]
-            nn.Conv2d(
-                in_channels=3,
-                out_channels=32,
-                kernel_size=5,
-                stride=1,
-                padding=2
-            ),
-            # [32x32x32]
-            nn.ReLU(),
-            nn.MaxPool2d(kernel_size=2, stride=2),
-            # [16x16x32]
-            nn.Conv2d(
-                in_channels=32,
-                out_channels=64,
-                kernel_size=5,
-                stride=1,
-                padding=2
-            ),
-            # [16x16x64]
-            nn.ReLU(),
-            nn.MaxPool2d(kernel_size=2, stride=2),
-            # [8x8x64]
-            nn.Conv2d(
-                in_channels=64,
-                out_channels=128,
-                kernel_size=5,
-                stride=1,
-                padding=2
-            ),
-            nn.ReLU(),
-            # [8x8x128]
-            nn.MaxPool2d(kernel_size=2, stride=2),
-            # [4x4x128]
-        )
-        # The output of feature_extractor will be [batch_size, num_filters, 16, 16]
-        self.num_output_features = 128*4*4
-        # Initialize our last fully connected layer
-        # Inputs all extracted features from the convolutional layers
-        # Outputs num_classes predictions, 1 for each class.
-        # There is no need for softmax activation function, as this is
-        # included with nn.CrossEntropyLoss
-        self.classifier = nn.Sequential(
-            nn.Linear(self.num_output_features, 64),
-            nn.ReLU(),
-            nn.Linear(64, num_classes),
-        )
-
+        for param in self.model.parameters ():
+            param.requires_grad = False
+        for param in self.model.fc.parameters ():
+            param.requires_grad = True
+        for param in self.model.layer4.parameters ():
+            param.requires_grad = True
 
     def forward(self, x):
-        """
-        Performs a forward pass through the model
-        Args:
-            x: Input image, shape: [batch_size, 3, 32, 32]
-        """
-
-        # Run image through convolutional layers
-        x = self.feature_extractor(x)
-        # Reshape our input to (batch_size, num_output_features)
-        x = x.view(-1, self.num_output_features)
-        # Forward pass through the fully-connected layers.
-        x = self.classifier(x)
+        x = nn.functional.interpolate(x, scale_factor=8)
+        x = self.model(x)
         return x
-
 
 class Trainer:
 
@@ -96,8 +34,8 @@ class Trainer:
         """
         # Define hyperparameters
         self.epochs = 100
-        self.batch_size = 64
-        self.learning_rate = 1e-2
+        self.batch_size = 32
+        self.learning_rate = 5e-4
         self.early_stop_count = 4
 
         # Architecture
@@ -105,12 +43,12 @@ class Trainer:
         # Since we are doing multi-class classification, we use the CrossEntropyLoss
         self.loss_criterion = nn.CrossEntropyLoss()
         # Initialize the mode
-        self.model = ExampleModel(image_channels=3, num_classes=10)
+        self.model = ExampleModel()
         # Transfer model to GPU VRAM, if possible.
         self.model = to_cuda(self.model)
 
         # Define our optimizer. SGD = Stochastich Gradient Descent
-        self.optimizer = torch.optim.SGD(self.model.parameters(),
+        self.optimizer = torch.optim.Adam(self.model.parameters(),
                                          self.learning_rate)
 
         # Load our dataset
