@@ -14,7 +14,7 @@ for param in tensor.fc.parameters ():
 for param in tensor.layer4.parameters ():
     param.requires_grad = True
 
-henk = tensor.conv1
+henk = nn.Sequential(tensor.conv1, tensor.layer1, tensor.layer2, tensor.layer3, tensor.layer4)
 print(henk)
 
 for batch_it, (x,y) in enumerate(data_train):
@@ -22,8 +22,8 @@ for batch_it, (x,y) in enumerate(data_train):
     print(x.size())
     derp = henk.forward(x)
     print(derp.size())
-    utils.save_image(x, 'task_3_e/image.png', nrow=256)
+    utils.save_image(x, 'task_3_f/image.png', nrow=256)
     for i in range(0,10):
-        utils.save_image(derp[0][i], 'task_3_e/'+str(i)+'.png', nrow=128)
+        utils.save_image(derp[0][i], 'task_3_f/filter'+str(i)+'.png', nrow=164)
     print(derp)
     break
