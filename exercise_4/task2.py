@@ -41,6 +41,8 @@ def calculate_precision(num_tp, num_fp, num_fn):
     Returns:
         float: value of precision
     """
+    if num_tp == num_fp:
+        return 0
     return num_tp/float(num_tp+num_fp)
 
 
@@ -54,6 +56,8 @@ def calculate_recall(num_tp, num_fp, num_fn):
     Returns:
         float: value of recall
     """
+    if num_tp == num_fn:
+        return 0
     return num_tp/float(num_tp+num_fn)
 
 def get_all_box_matches(prediction_boxes, gt_boxes, iou_threshold):
@@ -250,4 +254,4 @@ def mean_average_precision(ground_truth_boxes, predicted_boxes):
 if __name__ == "__main__":
     ground_truth_boxes = read_ground_truth_boxes()
     predicted_boxes = read_predicted_boxes()
-    mean_average_precision(ground_truth_boxes, predicted_boxes)
+    #mean_average_precision(ground_truth_boxes, predicted_boxes)
