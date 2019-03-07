@@ -4,11 +4,12 @@ import json
 import copy
 from task2_tools import read_predicted_boxes, read_ground_truth_boxes
 
+
 def calculate_iou(pred_box, gt_box):
     """Calculate intersection over union of single predicted and ground truth box.
 
     Args:
-        prediction_box (np.array of floats): location of predicted object as
+        pred_box (np.array of floats): location of predicted object as
             [xmin, ymin, xmax, ymax]
         gt_box (np.array of floats): location of ground truth object as
             [xmin, ymin, xmax, ymax]
@@ -28,6 +29,7 @@ def calculate_iou(pred_box, gt_box):
 
     return internal_area/float(pred_box_area + gt_box_area - internal_area)
 
+
 def calculate_precision(num_tp, num_fp, num_fn):
     """ Calculates the precision for the given parameters.
         Returns 1 if num_tp + num_fp = 0
@@ -39,7 +41,7 @@ def calculate_precision(num_tp, num_fp, num_fn):
     Returns:
         float: value of precision
     """
-    raise NotImplementedError
+    return num_tp/float(num_tp+num_fp)
 
 
 def calculate_recall(num_tp, num_fp, num_fn):
@@ -52,8 +54,7 @@ def calculate_recall(num_tp, num_fp, num_fn):
     Returns:
         float: value of recall
     """
-    raise NotImplementedError
-
+    return num_tp/float(num_tp+num_fn)
 
 def get_all_box_matches(prediction_boxes, gt_boxes, iou_threshold):
     """Finds all possible matches for the predicted boxes to the ground truth boxes.
