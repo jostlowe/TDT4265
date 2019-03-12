@@ -85,7 +85,26 @@ def get_all_box_matches(prediction_boxes, gt_boxes, iou_threshold):
     # Sort all matches on IoU in descending order
 
     # Find all matches with the highest IoU threshold
-    raise NotImplementedError
+    match_pred = []
+    match_gt = []
+
+    for gt_box in gt_boxes:
+        best_iou = 0
+        best_pred_box = None
+
+        for pred_box in prediction_boxes:
+            iou = calculate_iou(pred_box, gt_box)
+            if iou >= iou_threshold and iou > best_iou:
+                best_pred_box = pred_box
+                best_iou = iou
+
+        # No matching pred.box
+        if best_pred_box is not None:
+            match_pred.append(best_pred_box)
+            match_gt.append(gt_box)
+
+    # Convert to numpy arrays
+    return np.array(match_pred), np.array(match_gt)
 
 
 def calculate_individual_image_result(
@@ -106,11 +125,12 @@ def calculate_individual_image_result(
         dict: containing true positives, false positives, true negatives, false negatives
             {"true_pos": int, "false_pos": int, "false_neg": int}
     """
-    raise NotImplementedError
-    # Find the bounding box matches with the highes IoU threshold
-    
-    # Compute true positives, false positives, false negatives
+    pred_match, gt_match = get_all_box_matches(prediction_boxes, gt_boxes, iou_threshold)
 
+    num_true_pos = pred_match.shape[0]
+    num_false_pos = prediction_boxes.shape[0] - num_true_pos
+    num_false_neg = gt_boxes.shape[0] - num_true_pos
+    return {"true_pos": num_true_pos, "false_pos": num_false_pos, "false_neg": num_false_neg}
 
 def calculate_precision_recall_all_images(
         all_prediction_boxes, all_gt_boxes, iou_threshold):
@@ -131,12 +151,18 @@ def calculate_precision_recall_all_images(
     Returns:
         tuple: (precision, recall). Both float.
     """
-    raise NotImplementedError
-    # Find total true positives, false positives and false negatives
-    # over all images
+    total_true_pos, total_false_pos, total_false_neg = 0, 0, 0
+    for image_pred_boxes, image_gt_boxes in zip(all_prediction_boxes, all_gt_boxes):
+        num_dict = calculate_individual_image_result(image_pred_boxes, image_gt_boxes, iou_threshold)
 
-    # Compute precision, recall
+        total_true_pos += num_dict["true_pos"]
+        total_false_pos += num_dict["false_pos"]
+        total_true_pos += num_dict["true_pos"]
 
+    precision = calculate_precision(total_true_pos, total_false_pos, total_false_neg)
+    recall = calculate_recall(total_true_pos, total_false_pos, total_false_neg)
+
+    return precision, recall
 
 def get_precision_recall_curve(all_prediction_boxes, all_gt_boxes,
                                confidence_scores, iou_threshold):
@@ -168,8 +194,26 @@ def get_precision_recall_curve(all_prediction_boxes, all_gt_boxes,
     # DO NOT CHANGE. If you change this, the tests will not pass when we run the final
     # evaluation
     confidence_thresholds = np.linspace(0, 1, 500)
-    # YOUR CODE HERE
-    raise NotImplementedError
+
+    precision, recall = [], []
+
+    for confidence_threshold in confidence_thresholds:
+        image_pred = []
+        for img_num, predicted_boxes in enumerate(all_prediction_boxes):
+            pred_array = []
+            for box_num, prediction_box in enumerate(predicted_boxes):
+                if confidence_scores[img_num][box_num] >= confidence_threshold:
+                    pred_array.append(prediction_box)
+            pred_array = np.array(pred_array)
+            image_pred.append(pred_array)
+        image_pred = np.array(image_pred)
+
+        prec, rec = calculate_precision_recall_all_images(image_pred, all_gt_boxes, iou_threshold)
+
+        precision.append(prec)
+        precision.append(rec)
+
+    return np.array(precision), np.array(recall)
 
 
 def plot_precision_recall_curve(precisions, recalls):
@@ -254,4 +298,4 @@ def mean_average_precision(ground_truth_boxes, predicted_boxes):
 if __name__ == "__main__":
     ground_truth_boxes = read_ground_truth_boxes()
     predicted_boxes = read_predicted_boxes()
-    #mean_average_precision(ground_truth_boxes, predicted_boxes)
+    mean_average_precision(ground_truth_boxes, predicted_boxes)
