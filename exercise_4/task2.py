@@ -200,25 +200,30 @@ def get_precision_recall_curve(all_prediction_boxes, all_gt_boxes,
     # evaluation
     confidence_thresholds = np.linspace(0, 1, 500)
 
-    precision, recall = [], []
+    precision = []
+    recall = []
 
-    for confidence_threshold in confidence_thresholds:
-        image_pred = []
-        for img_num, pred_boxes in enumerate(all_prediction_boxes):
-            pred_array = []
-            for box_num, pred_box in enumerate(pred_boxes):
-                if confidence_scores[img_num][box_num] >= confidence_threshold:
-                    pred_array.append(pred_box)
-            pred_array = np.array(pred_array)
-            image_pred.append(pred_array)
-        image_pred = np.array(image_pred)
+    # Sort out predictions with confidence below threshold
+    for c_t in confidence_thresholds:
+      img_pred_array = []
+      for img_num, pred_boxes in enumerate(all_prediction_boxes):
+        pred_array = []
+        for box_num, pred_box in enumerate(pred_boxes):
 
-        prec, rec = calculate_precision_recall_all_images(image_pred, all_gt_boxes, iou_threshold)
+            if confidence_scores[img_num][box_num] >= c_t:
+              pred_array.append(pred_box)
 
-        precision.append(prec)
-        precision.append(rec)
+        pred_array = np.array(pred_array)
+        img_pred_array.append(pred_array)
 
-    return np.array(precision), np.array(recall)
+      img_pred_array = np.array(img_pred_array)
+
+      prc, rcl = calculate_precision_recall_all_images(img_pred_array, all_gt_boxes, iou_threshold)
+
+      precision.append(prc)
+      recall.append(rcl)
+
+    return (np.array(precision), np.array(recall))
 
 
 def plot_precision_recall_curve(precisions, recalls):
